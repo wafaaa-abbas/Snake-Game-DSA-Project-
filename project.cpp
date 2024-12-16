@@ -130,6 +130,47 @@ class Map
         go_to_xy (FoodCordX , FoodCordY); //move cursor to cordinates
         cout<<"F";
     } 
+
+    //function for creating obstacles (displayed as block characters)
+    void createObstacles(int count)
+    {
+        //making current obstacle cordinates empty
+        for (int i = 0; i < dimensionY - 1; i++)
+        {
+            for (int j = 0; j < dimensionY - 1; j++)
+            {
+                if (mapGrid[i][j]==4)
+                {
+                    mapGrid[i][j]=0;
+                    go_to_xy(j,i); 
+                    cout<<" ";
+                }
+            }
+        }
+
+        //creating new obstacles:
+        srand(time(NULL));
+        //The number of obstacles generated depends on the level
+        for (int i = 0; i < count; i++)
+        {
+            int obsCordX, obsCordY;
+
+            do {
+            obsCordX = rand() % (dimensionX - 2) + 1;
+            obsCordY = rand() % (dimensionY - 2) + 1;
+            } while(mapGrid[obsCordY][obsCordX]!= 0);
+
+            mapGrid[obsCordY][obsCordX] = 4;
+            go_to_xy(obsCordX,obsCordY);
+            cout<<char(176);
+
+        }
+    }
+
+    bool isObstacle(int x, int y)
+    {
+        return mapGrid[y][x]==4;
+    }
 };
 
 
@@ -140,8 +181,10 @@ class Game
     SnakeBody snake;
     int dx; //for chnage in x cordinate
     int dy; //for chnage in y cordinate
+    bool grow;
+    int level; 
 
-    Game():dx(1), dy(0){}; //for moving right as soon as game starts
+    Game():dx(1), dy(0), level(1), grow(false){}; //for moving right as soon as game starts
 
     //function for determining dy and dx based on user input
     void input()
@@ -190,13 +233,35 @@ class Game
         }
     }
 
+    void updateLevel()
+    {
+        int newlevel;
+        newlevel = (map.score / 1) +1;
+
+        if (newlevel > level)
+        {
+            level = newlevel;
+            map.createObstacles(level * 2 - 2); //increase obstacles with each level
+        }
+    }
+
+    int getSleeptime()
+    {
+        if (level == 1){return 100;}
+        if (level == 2){return 70;}
+        if (level == 3){return 50;}
+        if (level == 4){return 30;}
+        if (level == 5){return 25;}
+        if (level == 6){return 20;}
+        if (level > 6){return 10;}
+    }
+
     void playGame()
     {
         //setting up the game:
         map.displayWalls();
         map.createFood();
         snake.createBody(10,10);
-        bool grow = false;
 
         while(true) //runs until wall is hit
         {
@@ -217,17 +282,22 @@ class Game
                 grow = true;
                 map.score++;
                 map.createFood();
+                updateLevel();
             }
 
             //checking for collission
             if (snake.head->cordX == 0 || snake.head->cordY == 0 || snake.head->cordX == map.dimensionX-1 ||
-              snake.head->cordY == map.dimensionY-1 )
+              snake.head->cordY == map.dimensionY-1 || map.isObstacle(snake.head->cordX,snake.head->cordY))
               {
-                cout<<"\n ---GAME OVER---\n";
+                system("cls");
+                cout << "----------------------------\n";
+                cout << "        GAME OVER!          \n";
+                cout << "----------------------------\n";
+                cout << "Your Final Score: " << map.score << "\n";
                 break; //exit the loop
               }
-
-              Sleep (100);
+              
+                Sleep (getSleeptime());
         } 
     }
 };
