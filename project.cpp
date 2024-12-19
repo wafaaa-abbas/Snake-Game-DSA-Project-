@@ -5,6 +5,70 @@
 #include <fstream> //for filehandling
 using namespace std;
 
+//BST leaderboard
+//***********************************************************************************************************
+struct BSTNode 
+{
+    string username;
+    int score;
+    int level;
+    BSTNode* left;
+    BSTNode* right;
+
+    BSTNode(string name, int scr, int lvl) : username(name), score(scr), level(lvl), left(NULL), right(NULL) {}
+};
+
+class BST 
+{
+    private:
+    BSTNode* root;
+
+    BSTNode* insert(BSTNode* node, string username, int score, int level) 
+    {
+        if (node == NULL) 
+        {
+            return new BSTNode(username, score, level);
+        }
+        if (score < node->score) 
+        {
+            node->left = insert(node->left, username, score, level);
+        } else 
+        {
+            node->right = insert(node->right, username, score, level);
+        } 
+        return node;
+    }
+
+    public:
+        BST() : root(NULL) {}
+
+        void insert(string username, int score, int level) 
+        {
+            root = insert(root, username, score, level);
+        }
+
+       void displayLeaderboard() 
+       {
+            if (root == NULL) 
+            {
+                cout << "No scores available.\n";
+                return;
+            }
+            cout << "Leaderboard (Ascending Order):\n";
+            inOrderTraversal(root);
+        }
+
+    void inOrderTraversal(BSTNode* node) 
+    {
+        if (node == NULL) return;
+        inOrderTraversal(node->left);
+        cout << "Username: " << node->username
+         << " | Score: " << node->score
+         << " | Level: " << node->level << endl;
+        inOrderTraversal(node->right);
+    }
+};
+//***********************************************************************************************************
 //User handling 
 //**********************************************************************************************************
 struct UserData
@@ -158,6 +222,15 @@ class UserSystem
     UserData getUserData(int userIndex)
     {
         return users[userIndex];
+    }
+
+    //for bst
+    void addtoBST(BST& bst) 
+    {
+        for (int i = 0; i < usercount; i++) 
+        {
+            bst.insert(users[i].username, users[i].highscore,users[i].currentLevel);
+        }
     }
     };
 //**********************************************************************************************************
@@ -581,19 +654,22 @@ class Game
 int main()
 {
     system("cls");
+    UserSystem userSystem;
+    BST bst;
+    userSystem.addtoBST(bst); //add to BST the initial user data
     
     int choice = 0;
-    while (choice != 4)
+    while (choice != 5)
     {
-
         cout<<"SNAKE GAME"<<endl;
         cout<<"1. Register\n";
         cout<<"2. Login\n";
         cout<<"3. How to play\n";
-        cout<<"4. Exit\n";
+        cout<<"4. Leaderboard\n";
+        cout<<"5. Exit\n";
         cin>>choice;
 
-        UserSystem userSystem;
+        // UserSystem userSystem;
         int userIndex = -1;
 
         switch(choice)
@@ -602,64 +678,72 @@ int main()
             {
                 system("cls");
                 userSystem.registerUser();
+                bst = BST(); //resetting
+                userSystem.addtoBST(bst); // add updated user data
+                cout << "Returning to main menu...\n";
+                Sleep(2000);
+                system("cls");
                 break;
             }
             case 2:
             {
                 system("cls");
-            userIndex = userSystem.loginUser();
-            if (userIndex != -1)
-            {
-                UserData userData = userSystem.getUserData(userIndex);
-                bool keepPlaying = true;
-
-                while (keepPlaying) // Replay loop
+                int userIndex = userSystem.loginUser();
+                if (userIndex != -1)
                 {
-                    int playChoice;
-                    cout << "1. Restart\n2. Continue\n";
-                    cin >> playChoice;
+                    UserData userData = userSystem.getUserData(userIndex);
+                    bool keepPlaying = true;
 
-                    if (playChoice == 1) // Restart the game
-                    {
-                        system("cls");
-                        Game g(0, 1, 0);
-                        g.playGame(userSystem, userIndex, 1);
-                        userSystem.updateUser(userIndex, g.map.score, g.level, g.snake.getBodyCount());
-                    }
-                    else if (playChoice == 2) // Continue from saved state
-                    {
-                        system("cls");
-                        Game g(userData.currentScore, userData.currentLevel, userData.bodycount);
-                        g.playGame(userSystem, userIndex, userData.bodycount);
-                        userSystem.updateUser(userIndex, g.map.score, g.level, g.snake.getBodyCount());
-                    }
+                        while (keepPlaying) //Replay loop
+                        {
+                            int playChoice;
+                            cout << "1. Restart\n2. Continue\n";
+                            cin >> playChoice;
 
-                    // Ask user after game over
-                    int postGameChoice;
-                    cout << "\n1. Replay\n2. Log Out\n3. Return to Main Menu\n";
-                    cin >> postGameChoice;
+                            if (playChoice == 1) //Restart the game
+                            {
+                                system("cls");
+                                Game g(0, 1, 0);
+                                g.playGame(userSystem, userIndex, 1);
+                                userSystem.updateUser(userIndex, g.map.score, g.level, g.snake.getBodyCount());
+                            }
+                            else if (playChoice == 2) //Continue from saved state
+                            {
+                                system("cls");
+                                Game g(userData.currentScore, userData.currentLevel, userData.bodycount);
+                                g.playGame(userSystem, userIndex, userData.bodycount);
+                                userSystem.updateUser(userIndex, g.map.score, g.level, g.snake.getBodyCount());
+                            }
 
-                    if (postGameChoice == 2) // Log out
-                    {
-                        cout << "Logging out...\n";
-                        userIndex = -1;
-                        keepPlaying = false;
-                    }
-                    else if (postGameChoice == 3) // Return to Main Menu
-                    {
-                        keepPlaying = false;
-                    }
-                    else
-                    {
-                        system("cls");
-                        userData = userSystem.getUserData(userIndex); // Reload updated user data
-                    }
-                }
+                            // Ask user after game over
+                            int postGameChoice;
+                            cout << "\n1. Replay\n2. Log Out\n3. Return to Main Menu\n";
+                            cin >> postGameChoice;
+
+                            if (postGameChoice == 2) // Log out
+                            {
+                                cout << "Logging out...\n";
+                                userIndex = -1;
+                                keepPlaying = false;
+                            }
+                            else if (postGameChoice == 3) // Return to Main Menu
+                            {
+                                keepPlaying = false;
+                            }
+                            else
+                            {
+                                system("cls");
+                                userData = userSystem.getUserData(userIndex); // Reload updated user data
+                            }
+                        }
+                    bst = BST(); //Reset the BST
+                    userSystem.addtoBST(bst); //add to BST again after gameplay (updated)
             }
             break;
             }
             case 3:
             {
+                system("cls");
                 cout << "\nHOW TO PLAY:\n";
                 cout << "1. Use 'W', 'A', 'S', 'D' to move the snake.\n";
                 cout << "2. Avoid running into walls or the snake's own body.\n";
@@ -673,12 +757,23 @@ int main()
             }
             case 4:
             {
+                system("cls");
+                bst.displayLeaderboard(); // Display the leaderboard
+                cout << "\nPress any key to return to the main menu...\n";
+                _getch(); // Wait for user input
+                system("cls"); // Clear the screen
+                break;
+            }
+            case 5:
+            {
                 cout<<"Exiting...";
                 break;
             }
             default:
             {
-                cout<<"Invalid Entry";
+                cout << "Invalid Entry\n";
+                Sleep(1000); // Pause briefly
+                system("cls"); // Clear the screen
                 break;
             }
         }
