@@ -14,6 +14,7 @@ struct UserData
     int highscore;
     int currentScore;
     int currentLevel;
+    int bodycount;
 };
 
 //class to manage user functions:
@@ -46,6 +47,7 @@ class UserSystem
                 >> users[usercount].highscore
                 >> users[usercount].currentScore
                 >> users[usercount].currentLevel
+                >> users[usercount].bodycount
             )
             {
                 usercount++;
@@ -67,7 +69,8 @@ class UserSystem
             << users[i].password << " "
             << users[i].highscore << " " 
             << users[i].currentScore << " " 
-            << users[i].currentLevel << "\n";
+            << users[i].currentLevel << " "
+            << users[i].bodycount << "\n";
         }
         file.close();
         }
@@ -103,6 +106,7 @@ class UserSystem
         users[usercount].highscore = 0;
         users[usercount].currentScore = 0;
         users[usercount].currentLevel = 1;
+        users[usercount].bodycount = 0;
         usercount++;
         saveUsers();
         cout << "Registration successful!\n";
@@ -136,7 +140,7 @@ class UserSystem
         << users[userIndex].highscore<<"\n";
         return userIndex;
     }
-    void updateUser(int userIndex, int score, int level)
+    void updateUser(int userIndex, int score, int level, int bodyCount)
     {
         if (userIndex < 0 || userIndex >= usercount)
             return;
@@ -146,6 +150,7 @@ class UserSystem
 
         users[userIndex].currentScore = score;
         users[userIndex].currentLevel = level;
+        users[userIndex].bodycount = bodyCount;
 
         saveUsers();
     }
@@ -195,6 +200,30 @@ class SnakeBody
         }
     }
 
+    //recreating the snake for replay
+    void snakeBodyRecreate(int bodycount) 
+    {
+        //delete existing body
+        Node* current = head;
+        while (current != NULL) 
+        {
+            Node* temp = current;
+            current = current->next;
+            delete temp;
+        }
+        head = NULL;
+        tail = NULL;
+
+        int prevX = 10; // Starting position of the snake
+        int prevY = 10;
+
+        for (int i = 0; i < bodycount; i++) 
+        {
+        createBody(prevX, prevY); 
+        prevX--;
+        }
+}
+
     //funcion to move snake
     void move(int dx, int dy, bool& grow)
     {
@@ -224,6 +253,18 @@ class SnakeBody
             createBody(prevX,prevY); //ellongate the snake by adding a new node
             grow = false;
         }
+    }
+
+    int getBodyCount() 
+    {
+        int count = 0;
+        Node* current = head;
+        while (current != NULL) 
+        {
+            count++;
+            current = current->next;
+        }
+        return count;
     }
 
 };
@@ -337,7 +378,8 @@ class Game
     bool grow;
     int level; 
 
-    Game(int startScore, int startLevel):dx(1), dy(0), level(1), grow(false){map.score = startScore;} //for moving right as soon as game starts
+    Game(int startScore, int startLevel, int bodycount):dx(1), dy(0), level(startLevel), grow(false){map.score = startScore;
+    snake.snakeBodyRecreate(bodycount);} //for moving right as soon as game starts
 
     //function for determining dy and dx based on user input
     void input()
@@ -429,13 +471,13 @@ class Game
         map.createObstacles(level * 2 - 2); // Generate obstacles for the starting level
     }
 
-    void playGame()
+    void playGame(UserSystem& userSystem, int userIndex,int bodycount = 1)
     {
         //setting up the game:
         map.displayWalls();
         map.createFood();
         initializeLevel();
-        snake.createBody(10,10);
+        snake.snakeBodyRecreate(bodycount);
 
         while(true) //runs until wall is hit
         {
@@ -457,6 +499,7 @@ class Game
                 map.score++;
                 map.createFood();
                 updateLevel();
+                userSystem.updateUser(userIndex, map.score, level, snake.getBodyCount());
             }
 
             //checking for collission
@@ -516,16 +559,16 @@ int main()
                     if (playChoice == 1) // Restart the game
                     {
                         system("cls");
-                        Game g(0, 1);
-                        g.playGame();
-                        userSystem.updateUser(userIndex, g.map.score, g.level);
+                        Game g(0, 1, 0);
+                        g.playGame(userSystem, userIndex, 1);
+                        userSystem.updateUser(userIndex, g.map.score, g.level, g.snake.getBodyCount());
                     }
                     else if (playChoice == 2) // Continue from saved state
                     {
                         system("cls");
-                        Game g(userData.currentScore, userData.currentLevel);
-                        g.playGame();
-                        userSystem.updateUser(userIndex, g.map.score, g.level);
+                        Game g(userData.currentScore, userData.currentLevel, userData.bodycount);
+                        g.playGame(userSystem, userIndex, userData.bodycount);
+                        userSystem.updateUser(userIndex, g.map.score, g.level, g.snake.getBodyCount());
                     }
 
                     // Ask user after game over
