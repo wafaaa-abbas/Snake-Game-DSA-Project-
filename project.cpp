@@ -311,9 +311,14 @@ class Map
     //function for creating random food cordinatates:
     void createFood()
     {
-        srand(time(NULL));
-        mapGrid [FoodCordY] [FoodCordX] = 0; //making current food cordinate empty
+        if (mapGrid[FoodCordY][FoodCordX] == 3) 
+        {
+            mapGrid[FoodCordY][FoodCordX] = 0; //reset food position
+            go_to_xy(FoodCordX, FoodCordY);
+            cout << " ";
+        }//making current food cordinate empty
 
+        srand(time(NULL));
         do
         {
             FoodCordX = rand() % (dimensionX - 2) + 1;
@@ -326,7 +331,7 @@ class Map
     } 
 
     //function for creating obstacles (displayed as block characters)
-    void createObstacles(int count)
+    void createObstacles(SnakeBody& snake, int count)
     {
         //making current obstacle cordinates empty
         for (int i = 0; i < dimensionY - 1; i++)
@@ -352,7 +357,9 @@ class Map
             do {
             obsCordX = rand() % (dimensionX - 2) + 1;
             obsCordY = rand() % (dimensionY - 2) + 1;
-            } while(mapGrid[obsCordY][obsCordX]!= 0);
+            } while(mapGrid[obsCordY][obsCordX]!= 0 || 
+            (obsCordX == FoodCordX && obsCordY == FoodCordY) ||
+            isSnakePosition(snake, obsCordX, obsCordY));
 
             mapGrid[obsCordY][obsCordX] = 4;
             go_to_xy(obsCordX,obsCordY);
@@ -364,6 +371,40 @@ class Map
     bool isObstacle(int x, int y)
     {
         return mapGrid[y][x]==4;
+    }
+
+    void clearMap() 
+    {
+        for (int i = 0; i < dimensionY; i++) 
+        {
+            for (int j = 0; j < dimensionX; j++) 
+            {
+                mapGrid[i][j] = 0; //reset grid
+                go_to_xy(j, i);
+                cout << " "; //clear terminal
+            }
+        }
+    }
+
+    bool isSnakePosition(SnakeBody& snake, int x, int y) 
+    {
+        Node* current = snake.head;
+        while (current != NULL) 
+        {
+            if (current->cordX == x && current->cordY == y) 
+            {
+                return true;
+            }
+            current = current->next;
+        }
+    return false;
+    }
+
+    void resetGridAndDisplay() 
+    {
+        clearMap();          // Clear the grid
+        displayWalls();      // Redraw the walls
+        createFood();        // Generate a new food position
     }
 };
 
@@ -436,7 +477,7 @@ class Game
         if (newlevel > level)
         {
             level = newlevel;
-            map.createObstacles(level * 2 - 2); //increase obstacles with each level
+            map.createObstacles(snake, level * 2 - 2); //increase obstacles with each level
         }
     }
 
@@ -468,16 +509,37 @@ class Game
     void initializeLevel()
     {
         if (level == 1){return;}
-        map.createObstacles(level * 2 - 2); // Generate obstacles for the starting level
+        map.createObstacles(snake, level * 2 - 2); // Generate obstacles for the starting level
     }
+
+    void flushInputBuffer() 
+    {
+        while (_kbhit()) _getch(); //clear residual input
+    }
+
+    bool isSnakeCollision() 
+    {
+        Node* current = snake.head->next; // Start from the second node
+        while (current != NULL) 
+        {
+            if (current->cordX == snake.head->cordX && current->cordY == snake.head->cordY) 
+            {
+                return true;
+            }
+            current = current->next;
+        }
+    return false;
+}
 
     void playGame(UserSystem& userSystem, int userIndex,int bodycount = 1)
     {
         //setting up the game:
-        map.displayWalls();
+        flushInputBuffer();
+        system("cls");
+        map.resetGridAndDisplay();
+        snake.snakeBodyRecreate(bodycount);
         map.createFood();
         initializeLevel();
-        snake.snakeBodyRecreate(bodycount);
 
         while(true) //runs until wall is hit
         {
@@ -504,11 +566,12 @@ class Game
 
             //checking for collission
             if (snake.head->cordX == 0 || snake.head->cordY == 0 || snake.head->cordX == map.dimensionX-1 ||
-              snake.head->cordY == map.dimensionY-1 || map.isObstacle(snake.head->cordX,snake.head->cordY))
-              {
+              snake.head->cordY == map.dimensionY-1 || map.isObstacle(snake.head->cordX,snake.head->cordY) ||
+              isSnakeCollision())
+            {
                 GameOver();
                 break; //exit the loop
-              }
+            }
               
                 Sleep (getSleeptime());
         } 
