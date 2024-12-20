@@ -232,6 +232,41 @@ class UserSystem
             bst.insert(users[i].username, users[i].highscore,users[i].currentLevel);
         }
     }
+
+    //sorting algorithm (bubble sort by levels) 
+     void bubbleSortByLevel() 
+    {
+        for (int i = 0; i < usercount - 1; i++) 
+        {
+            for (int j = 0; j < usercount - i - 1; j++) 
+            {
+                if (users[j].currentLevel < users[j + 1].currentLevel) //descending order
+                {
+                    UserData temp = users[j];
+                    users[j] = users[j + 1];
+                    users[j + 1] = temp;
+                }
+            }
+        }
+    }
+
+    //displaying sorted players
+    void displaySortedByLevel() 
+    {
+        if (usercount == 0) 
+        {
+            cout<<"No users registered yet.\n";
+            return;
+        }
+
+        cout<<"\nPlayers Sorted by Levels (Descending Order):\n";
+        for (int i = 0; i < usercount; i++) 
+        {
+            cout<<"Username: " << users[i].username
+                <<" | Level: " << users[i].currentLevel
+                <<" | High Score: " << users[i].highscore << endl;
+        }
+    }
     };
 //**********************************************************************************************************
 
@@ -659,14 +694,16 @@ int main()
     userSystem.addtoBST(bst); //add to BST the initial user data
     
     int choice = 0;
-    while (choice != 5)
+    while (choice != 6)
     {
+        system("cls");
         cout<<"SNAKE GAME"<<endl;
         cout<<"1. Register\n";
         cout<<"2. Login\n";
         cout<<"3. How to play\n";
         cout<<"4. Leaderboard\n";
-        cout<<"5. Exit\n";
+        cout<<"5. Players Sorted by Levels\n";
+        cout<<"6. Exit\n";
         cin>>choice;
 
         // UserSystem userSystem;
@@ -764,7 +801,16 @@ int main()
                 system("cls"); // Clear the screen
                 break;
             }
-            case 5:
+            case 5: 
+            { 
+                system("cls");
+                userSystem.bubbleSortByLevel();
+                userSystem.displaySortedByLevel();
+                cout << "\nPress any key to return to the main menu...\n";
+                _getch();
+                break;
+            }
+            case 6:
             {
                 cout<<"Exiting...";
                 break;

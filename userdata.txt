@@ -1,6 +1,7 @@
-wafa wafa 3 3 4 0
+wafa wafa 3 3 4 4
 hassan imrna 0 0 1 0
 momina momi 0 0 1 1
 ali pass 1 1 2 2
 asad rana 0 0 1 1
 dur dana 3 3 4 4
+musa raza 3 3 4 4
