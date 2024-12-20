@@ -5,6 +5,105 @@
 #include <fstream> //for filehandling
 using namespace std;
 
+
+//hashmaps 
+//**********************************************************************************************************
+struct UserData {
+    string username;
+    string password;
+    int highscore;
+    int currentScore;
+    int currentLevel;
+    int bodycount;
+};
+
+class HashMap {
+private:
+    static const int TABLE_SIZE = 100;
+
+    struct HashNode {
+        string username;
+        UserData userData;
+        HashNode* next;    //for linkedlist
+
+        HashNode(string uname, UserData uData) : username(uname), userData(uData), next(NULL) {}
+    };
+
+    HashNode* table[TABLE_SIZE]; //array of pointers to handle collisions with chaining
+
+    int hashFunction(const string& key) 
+    {
+        int hash = 0;
+        for (size_t i = 0; i < key.length(); i++) 
+        {
+            char c = key[i];
+            hash = (hash * 31 + c) % TABLE_SIZE;
+        }
+        return hash;
+    }
+
+
+public:
+    HashMap() 
+    {
+        for (int i = 0; i < TABLE_SIZE; i++) 
+        {
+            table[i] = NULL;
+        }
+    }
+
+    void insert(const string& username, const UserData& userData) 
+    {
+        int hashIndex = hashFunction(username);
+        HashNode* newNode = new HashNode(username, userData);
+
+        //Insert at the start of the chain
+        if (table[hashIndex] == NULL) 
+        {
+            table[hashIndex] = newNode;
+        } 
+        else 
+        {
+            HashNode* current = table[hashIndex];
+            while (current->next != NULL) 
+            {
+                current = current->next;
+            }
+            current->next = newNode; //Add the node to the end of the chain
+        }
+    }
+
+    UserData* search(const string& username) 
+    {
+        int hashIndex = hashFunction(username);
+        HashNode* current = table[hashIndex];
+
+        while (current != NULL) 
+        {
+            if (current->username == username) 
+            {
+                return &current->userData; //Return a pointer to the user's data
+            }
+            current = current->next;
+        }
+
+        return NULL; //if user not found
+    }
+
+    ~HashMap() {
+        for (int i = 0; i < TABLE_SIZE; i++) {
+            HashNode* current = table[i];
+            while (current != NULL) {
+                HashNode* temp = current;
+                current = current->next;
+                delete temp; // Clean up memory
+            }
+        }
+    }
+};
+
+//**********************************************************************************************************
+
 //Stack
 //**********************************************************************************************************
 struct BSTNode; //forward decleration
@@ -137,15 +236,6 @@ class BST
 //***********************************************************************************************************
 //User handling 
 //**********************************************************************************************************
-struct UserData
-{
-    string username;
-    string password;
-    int highscore;
-    int currentScore;
-    int currentLevel;
-    int bodycount;
-};
 
 //class to manage user functions:
 class UserSystem 
@@ -154,12 +244,14 @@ class UserSystem
     UserData users[100];
     int usercount;
     const char* filename;
+    HashMap userMap;
 
     UserSystem()
     {
         filename = "userdata.txt";
         usercount = 0;
         loadUsers();
+        populateHashMap();
     } 
 
     void loadUsers()
@@ -183,6 +275,14 @@ class UserSystem
                 usercount++;
             }
             file.close();
+        }
+    }
+
+    void populateHashMap() 
+    {
+        for (int i = 0; i < usercount; i++) 
+        {
+            userMap.insert(users[i].username, users[i]); //Add each user to the hashmap
         }
     }
 
@@ -238,6 +338,7 @@ class UserSystem
         users[usercount].currentLevel = 1;
         users[usercount].bodycount = 0;
         usercount++;
+        userMap.insert(username, users[usercount - 1]);
         saveUsers();
         cout << "Registration successful!\n";
     }
@@ -332,6 +433,12 @@ class UserSystem
                 <<" | Level: " << users[i].currentLevel
                 <<" | High Score: " << users[i].highscore << endl;
         }
+    }
+
+    //searching hashmap
+     UserData* searchUser(const string& username) 
+     {
+        return userMap.search(username);
     }
     };
 //**********************************************************************************************************
@@ -760,7 +867,7 @@ int main()
     userSystem.addtoBST(bst); //add to BST the initial user data
     
     int choice = 0;
-    while (choice != 7)
+    while (choice != 8)
     {
         system("cls");
         cout<<"SNAKE GAME"<<endl;
@@ -770,7 +877,8 @@ int main()
         cout<<"4. Leaderboard (accending)\n";
         cout<<"5. Leaderboard (decending)\n";
         cout<<"6. Players Sorted by Levels\n";
-        cout<<"7. Exit\n";
+        cout<<"7. Search Player\n";
+        cout<<"8. Exit\n";
         cin>>choice;
 
         // UserSystem userSystem;
@@ -904,6 +1012,32 @@ int main()
                 break;
             }
             case 7:
+            {
+                system("cls");
+                string username;
+                cout << "Enter the username to search: ";
+                cin >> username;
+
+                UserData* user = userSystem.searchUser(username);
+                if (user != NULL) 
+                {
+                    cout << "User Found!\n";
+                    cout << "Username: " << user->username << "\n";
+                    cout << "High Score: " << user->highscore << "\n";
+                    cout << "Current Score: " << user->currentScore << "\n";
+                    cout << "Current Level: " << user->currentLevel << "\n";
+                } 
+                else 
+                {
+                    cout << "User not found.\n";
+                }
+
+                cout << "\nPress any key to return to the main menu...\n";
+                _getch();
+                break;
+            }
+
+            case 8:
             {
                 cout<<"Exiting...";
                 break;
