@@ -5,6 +5,56 @@
 #include <fstream> //for filehandling
 using namespace std;
 
+//Stack
+//**********************************************************************************************************
+struct BSTNode; //forward decleration
+class Stack {
+    private:
+        BSTNode* stackArray[100];
+        int top;                 
+
+    public:
+        Stack() : top(-1) {};
+
+        bool isEmpty() 
+        {
+            return top == -1;
+        }
+
+        bool isFull() 
+        {
+            return top == 99;//max size
+        }
+
+        void push(BSTNode* node) 
+        {
+            if (isFull()) 
+            {
+                return;
+            }   
+            stackArray[++top] = node;
+        }
+
+        BSTNode* pop() 
+        {
+            if (isEmpty()) 
+            {
+                return NULL;
+            }
+            return stackArray[top--];
+        }
+
+        BSTNode* peek() 
+        {
+            if (isEmpty()) 
+            {
+                return NULL;
+            }
+            return stackArray[top];
+        }
+};
+//**********************************************************************************************************
+
 //BST leaderboard
 //***********************************************************************************************************
 struct BSTNode 
@@ -21,23 +71,34 @@ struct BSTNode
 class BST 
 {
     private:
-    BSTNode* root;
+        BSTNode* root;
 
-    BSTNode* insert(BSTNode* node, string username, int score, int level) 
-    {
-        if (node == NULL) 
+        BSTNode* insert(BSTNode* node, string username, int score, int level) 
         {
-            return new BSTNode(username, score, level);
+            if (node == NULL) 
+            {
+                return new BSTNode(username, score, level);
+            }
+            if (score < node->score) 
+            {
+                node->left = insert(node->left, username, score, level);
+            } else 
+            {
+                node->right = insert(node->right, username, score, level);
+            } 
+            return node;
         }
-        if (score < node->score) 
+
+        void inOrderTraversalToStack(BSTNode* node, Stack& stack) 
         {
-            node->left = insert(node->left, username, score, level);
-        } else 
-        {
-            node->right = insert(node->right, username, score, level);
-        } 
-        return node;
-    }
+            if (node == NULL) return;
+
+             inOrderTraversalToStack(node->left, stack);
+
+             stack.push(node);
+
+             inOrderTraversalToStack(node->right, stack);
+        }
 
     public:
         BST() : root(NULL) {}
@@ -58,15 +119,20 @@ class BST
             inOrderTraversal(root);
         }
 
-    void inOrderTraversal(BSTNode* node) 
-    {
-        if (node == NULL) return;
-        inOrderTraversal(node->left);
-        cout << "Username: " << node->username
-         << " | Score: " << node->score
-         << " | Level: " << node->level << endl;
-        inOrderTraversal(node->right);
-    }
+        void inOrderTraversal(BSTNode* node) 
+        {
+            if (node == NULL) return;
+            inOrderTraversal(node->left);
+            cout << "Username: " << node->username
+            << " | Score: " << node->score
+            << " | Level: " << node->level << endl;
+            inOrderTraversal(node->right);
+        }
+
+        void pushToStackDescending(Stack& stack) 
+        {
+             inOrderTraversalToStack(root, stack);
+        }
 };
 //***********************************************************************************************************
 //User handling 
@@ -694,16 +760,17 @@ int main()
     userSystem.addtoBST(bst); //add to BST the initial user data
     
     int choice = 0;
-    while (choice != 6)
+    while (choice != 7)
     {
         system("cls");
         cout<<"SNAKE GAME"<<endl;
         cout<<"1. Register\n";
         cout<<"2. Login\n";
         cout<<"3. How to play\n";
-        cout<<"4. Leaderboard\n";
-        cout<<"5. Players Sorted by Levels\n";
-        cout<<"6. Exit\n";
+        cout<<"4. Leaderboard (accending)\n";
+        cout<<"5. Leaderboard (decending)\n";
+        cout<<"6. Players Sorted by Levels\n";
+        cout<<"7. Exit\n";
         cin>>choice;
 
         // UserSystem userSystem;
@@ -795,13 +862,39 @@ int main()
             case 4:
             {
                 system("cls");
-                bst.displayLeaderboard(); // Display the leaderboard
+                bst.displayLeaderboard();
                 cout << "\nPress any key to return to the main menu...\n";
-                _getch(); // Wait for user input
-                system("cls"); // Clear the screen
+                _getch();
+                system("cls");
                 break;
             }
             case 5: 
+            { 
+                system("cls");
+                Stack nodeStack;
+                bst.pushToStackDescending(nodeStack);
+
+                if (nodeStack.isEmpty()) 
+                {
+                    cout << "No scores available.\n";
+                } 
+                else 
+                {
+                    cout << "Leaderboard (Descending Order):\n";
+                    while (!nodeStack.isEmpty()) 
+                    {
+                        BSTNode* node = nodeStack.pop();
+                        cout << "Username: " << node->username
+                            << " | Score: " << node->score
+                            << " | Level: " << node->level << endl;
+                    }
+                }
+
+                cout << "\nPress any key to return to the main menu...\n";
+                _getch();
+                break;
+            }
+            case 6: 
             { 
                 system("cls");
                 userSystem.bubbleSortByLevel();
@@ -810,7 +903,7 @@ int main()
                 _getch();
                 break;
             }
-            case 6:
+            case 7:
             {
                 cout<<"Exiting...";
                 break;
@@ -818,8 +911,8 @@ int main()
             default:
             {
                 cout << "Invalid Entry\n";
-                Sleep(1000); // Pause briefly
-                system("cls"); // Clear the screen
+                Sleep(1000); 
+                system("cls");
                 break;
             }
         }
