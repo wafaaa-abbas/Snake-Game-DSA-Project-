@@ -859,9 +859,52 @@ class Game
     }
 };
 
-int main()
+void printSnakeGameBanner()
 {
     system("cls");
+    cout << "\n\n";
+    cout << "**********************************************************************\n";
+    cout << "*                                                                    *\n";
+    cout << "*   _____             _           _____                              *\n";
+    cout << "*  / ____|           | |         / ____|                             *\n";
+    cout << "* | (___  _ __   __ _| | _____  | |  __  __ _ _ __ ___   ___         *\n";
+    cout << "*  \\___ \\| '_ \\ / _` | |/ / _ \\ | | |_ |/ _` | '_ ` _ \\ / _ \\        *\n";
+    cout << "*  ____) | | | | (_| |   <  __/ | |__| | (_| | | | | | |  __/        *\n";
+    cout << "* |_____/|_| |_|\\__,_|_|\\_\\___|  \\_____|\\__,_|_| |_| |_|\\___|        *\n";
+    cout << "*                                                                    *\n";
+    cout << "*            WELCOME TO THE CLASSIC SNAKE GAME!                      *\n";
+    cout << "*                                                                    *\n";
+    cout << "*          \"Eat food, grow longer, and avoid obstacles!\"             *\n";
+    cout << "*                                                                    *\n";
+    cout << "*             Controls: W (Up) A (Left) S (Down) D (Right)           *\n";
+    cout << "*                                                                    *\n";
+    cout << "**********************************************************************\n";
+    cout << "\n\n";
+    cout << "           Get ready to slither into a world of fun!                       \n";
+    Sleep(3000);
+}
+
+
+void printLoadingAnimation()
+{
+    cout << "\nLoading Game: ";
+    char loadingChar = '|';
+
+    for (int i = 0; i < 30; i++)
+    {
+        cout << loadingChar;
+        Sleep(100);
+    }
+    cout << "\nGame Loaded! Let's begin...\n";
+    Sleep(1000);
+}
+
+int main()
+{
+    Sleep(2000);
+    system("cls");
+    printSnakeGameBanner();
+    printLoadingAnimation();
     UserSystem userSystem;
     BST bst;
     userSystem.addtoBST(bst); //add to BST the initial user data
@@ -870,15 +913,21 @@ int main()
     while (choice != 8)
     {
         system("cls");
-        cout<<"SNAKE GAME"<<endl;
-        cout<<"1. Register\n";
-        cout<<"2. Login\n";
-        cout<<"3. How to play\n";
-        cout<<"4. Leaderboard (accending)\n";
-        cout<<"5. Leaderboard (decending)\n";
-        cout<<"6. Players Sorted by Levels\n";
-        cout<<"7. Search Player\n";
-        cout<<"8. Exit\n";
+        cout << "=============================================================\n";
+        cout << "                       SNAKE GAME MENU                       \n";
+        cout << "=============================================================\n";
+        cout << "|                                                           |\n";
+        cout << "|   1. Register                                             |\n";
+        cout << "|   2. Login                                                |\n";
+        cout << "|   3. How to play                                          |\n";
+        cout << "|   4. Leaderboard (Ascending)                              |\n";
+        cout << "|   5. Leaderboard (Descending)                             |\n";
+        cout << "|   6. Players Sorted by Levels                             |\n";
+        cout << "|   7. Search Player                                        |\n";
+        cout << "|   8. Exit                                                 |\n";
+        cout << "|                                                           |\n";
+        cout << "=============================================================\n";
+        cout << "Choose an option: ";
         cin>>choice;
 
         // UserSystem userSystem;
@@ -900,7 +949,7 @@ int main()
             case 2:
             {
                 system("cls");
-                int userIndex = userSystem.loginUser();
+                userIndex = userSystem.loginUser();
                 if (userIndex != -1)
                 {
                     UserData userData = userSystem.getUserData(userIndex);
@@ -950,7 +999,13 @@ int main()
                         }
                     bst = BST(); //Reset the BST
                     userSystem.addtoBST(bst); //add to BST again after gameplay (updated)
-            }
+                    
+                }
+                    else
+                    {
+                        cout << "Press any key to return to the main menu...\n";
+                        _getch();
+                    }
             break;
             }
             case 3:
